@@ -1,60 +1,262 @@
-This is a base node js project template, which anyone can use as it has been prepared, by keeping some of the most important code principles and project management recommendations. Feel free to change anything. 
+# 🚪 Flyora API Gateway
 
+The API Gateway service for the Flyora Airline Booking System. This service acts as the entry point for all client requests, handling authentication, authorization, request routing, and user management with role-based access control.
 
-`src` -> Inside the src folder all the actual source code regarding the project will reside, this will not include any kind of tests. (You might want to make separate tests folder)
+## 🎯 Features
 
-Lets take a look inside the `src` folder
+- User authentication and management
+- Role-based access control (RBAC)
+- Request routing to microservices
+- Rate limiting
+- Request/Response transformation
+- Error handling
+- Logging and monitoring
+- Security middleware
 
- - `config` -> In this folder anything and everything regarding any configurations or setup of a library or module will be done. For example: setting up `dotenv` so that we can use the environment variables anywhere in a cleaner fashion, this is done in the `server-config.js`. One more example can be to setup you logging library that can help you to prepare meaningful logs, so configuration for this library should also be done here. 
+## 🏗️ Tech Stack
 
- - `routes` -> In the routes folder, we register a route and the corresponding middleware and controllers to it. 
+- **Runtime**: Node.js
+- **Framework**: Express.js
+- **Database**: MySQL
+- **ORM**: Sequelize
+- **Authentication**: JWT, bcrypt
+- **Proxy**: http-proxy-middleware
+- **Rate Limiting**: express-rate-limit
+- **Logging**: Winston
+- **Development**: Nodemon
 
- - `middlewares` -> they are just going to intercept the incoming requests where we can write our validators, authenticators etc. 
+## 📁 Project Structure
 
- - `controllers` -> they are kind of the last middlewares as post them you call you business layer to execute the budiness logic. In controllers we just receive the incoming requests and data and then pass it to the business layer, and once business layer returns an output, we structure the API response in controllers and send the output. 
+```
+API-Gateway/
+├── src/
+│   ├── config/           # Configuration files
+│   │   ├── config.json   # Database configuration
+│   │   ├── logger-config.js
+│   │   └── server-config.js
+│   ├── controllers/      # Request handlers
+│   │   ├── user-controller.js
+│   │   └── info-controller.js
+│   ├── middlewares/     # Custom middlewares
+│   │   └── auth-request-middlewares.js
+│   ├── migrations/      # Database migrations
+│   ├── models/         # Database models
+│   │   ├── user.js
+│   │   ├── role.js
+│   │   └── user_role.js
+│   ├── repositories/   # Database operations
+│   │   ├── user-repository.js
+│   │   └── role-repository.js
+│   ├── routes/        # API routes
+│   │   └── v1/
+│   ├── seeders/      # Database seeders
+│   ├── services/     # Business logic
+│   │   └── user-service.js
+│   └── utils/       # Helper functions
+│       ├── common/
+│       ├── errors/
+│       └── helpers/
+├── .env
+└── package.json
+```
 
- - `repositories` -> this folder contains all the logic using which we interact the DB by writing queries, all the raw queries or ORM queries will go here.
+## 🔑 User and Role Models
 
- - `services` -> contains the buiness logic and interacts with repositories for data from the database
+### User Model
 
- - `utils` -> contains helper methods, error classes etc.
+```javascript
+{
+  email: String,     // Unique email, validated
+  password: String,  // Hashed using bcrypt
+  roles: [Role]      // Many-to-many relationship
+}
+```
 
-### Setup the project
+### Role Model
 
- - Download this template from github and open it in your favourite text editor. 
- - In the root directory create a `.env` file and add the following env variables
-    ```
-        PORT=<port number of your choice>
-    ```
-    ex: 
-    ```
-        PORT=3000
-    ```
- - Inside the `src/config` folder create a file named as `config.json` and write the following code:
- ```
- {
+```javascript
+{
+  name: Enum[("ADMIN", "CUSTOMER", "FLIGHT_COMPANY")];
+}
+```
+
+## 🚀 Setup and Installation
+
+1. **Clone the Repository**
+
+   ```bash
+   git clone https://github.com/collab-rishi/Flyora.git
+   cd Flyora/API-Gateway
+   ```
+
+2. **Install Dependencies**
+
+   ```bash
+   npm install
+   ```
+
+3. **Configure Environment**
+   Create a `.env` file with:
+
+   ```env
+   PORT=3001
+   DB_HOST=localhost
+   DB_USER=root
+   DB_PASSWORD=your_password
+   DB_NAME=flyora_gateway
+   DB_DIALECT=mysql
+
+   JWT_SECRET=your-secret-key
+   SALT_ROUNDS=10
+
+   FLIGHT_SERVICE_URL=http://localhost:3000
+   BOOKING_SERVICE_URL=http://localhost:3002
+   NOTIFICATION_SERVICE_URL=http://localhost:3003
+   ```
+
+4. **Database Setup**
+
+   ```bash
+   npx sequelize-cli db:create
+   npx sequelize-cli db:migrate
+   npx sequelize-cli db:seed:all
+   ```
+
+5. **Start the Service**
+   ```bash
+   npm run dev
+   ```
+
+## 🔄 API Endpoints
+
+### Authentication & User Management
+
+- **User Registration**
+
+  ```http
+  POST /api/v1/users/signup
+  ```
+
+  ```json
+  {
+    "email": "user@example.com",
+    "password": "securepass",
+    "roleId": 2
+  }
+  ```
+
+- **User Login**
+
+  ```http
+  POST /api/v1/users/signin
+  ```
+
+  ```json
+  {
+    "email": "user@example.com",
+    "password": "securepass"
+  }
+  ```
+
+- **Get User Profile**
+  ```http
+  GET /api/v1/users/:id
+  ```
+
+### Service Routes
+
+- **Flights Service**: `/api/v1/flights/*`
+- **Booking Service**: `/api/v1/bookings/*`
+- **Notification Service**: `/api/v1/notifications/*`
+
+## 🛡️ Role-Based Access Control
+
+The system supports three user roles:
+
+1. **ADMIN**
+
+   - Full system access
+   - User management
+   - Role management
+   - System monitoring
+
+2. **CUSTOMER**
+
+   - Flight search
+   - Booking management
+   - Profile management
+
+3. **FLIGHT_COMPANY**
+   - Flight management
+   - Schedule management
+   - Seat inventory
+
+## 🔒 Security Features
+
+- Password hashing with bcrypt
+- JWT-based authentication
+- Rate limiting per IP/user
+- Request validation
+- CORS protection
+- Error handling middleware
+
+## ⚙️ Configuration
+
+### Database Configuration (config/config.json)
+
+```json
+{
   "development": {
     "username": "root",
-    "password": "mypassword",
-    "database": "database_development",
-    "host": "127.0.0.1",
-    "dialect": "mysql"
-  },
-  "test": {
-    "username": "root",
-    "password": null,
-    "database": "database_test",
-    "host": "127.0.0.1",
-    "dialect": "mysql"
-  },
-  "production": {
-    "username": "root",
-    "password": null,
-    "database": "database_production",
+    "password": "your_password",
+    "database": "flyora_gateway",
     "host": "127.0.0.1",
     "dialect": "mysql"
   }
 }
 ```
- - If you;re setting up your development environment, then write the username of your db, password of your db and in dialect mention whatever db you are using for ex: mysql, mariadb etc
- - If you're setting up test or prod environment, make sure you also replace the host with the hosted db url.
+
+## 🔍 Logging
+
+The service uses Winston for logging with the following categories:
+
+- INFO: General operational logs
+- ERROR: Authentication failures and errors
+- DEBUG: Detailed request/response information
+
+## 🏃‍♂️ Running in Development
+
+```bash
+npm run dev
+```
+
+The service will start on the configured port (default: 3001).
+
+## 🧪 Testing
+
+```bash
+# TODO: Add test commands once implemented
+```
+
+## 📊 Monitoring
+
+The gateway tracks:
+
+- Request rates and patterns
+- Authentication attempts
+- Error rates
+- Service health
+- Response times
+
+## 🔐 Security Best Practices
+
+1. Use HTTPS in production
+2. Implement proper rate limiting
+3. Validate all input data
+4. Sanitize response data
+5. Regular security audits
+6. Keep dependencies updated
+
+## 📜 License
+
+This project is licensed under the ISC License.

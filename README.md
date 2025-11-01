@@ -106,7 +106,7 @@ Key Features:
 - Built with Express + NodeMailer or similar libraries.  
 
 📁 Folder: `/reminder-service`  
-📘 Detailed Docs: [Reminder Service README](./reminder-service/README.md)
+📘 Detailed Docs: [Reminder Service README](./notification-service/README.md)
 
 ---
 
@@ -119,7 +119,7 @@ Key Features:
 - Rate limiting and error handling.  
 
 📁 Folder: `/api-gateway`  
-📘 Detailed Docs: [API Gateway README](./api-gateway/README.md)
+📘 Detailed Docs: [API Gateway README](./API-Gateway/README.md)
 
 ---
 

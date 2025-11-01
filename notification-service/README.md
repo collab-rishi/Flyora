@@ -1,48 +1,219 @@
-This is a base node js project template, which anyone can use as it has been prepared, by keeping some of the most important code principles and project management recommendations. Feel free to change anything. 
+# 📧 Flyora Notification Service
 
+A microservice responsible for handling all email notifications in the Flyora Airline Booking System. This service processes email requests via message queues and manages the email delivery lifecycle.
 
-`src` -> Inside the src folder all the actual source code regarding the project will reside, this will not include any kind of tests. (You might want to make separate tests folder)
+## 🎯 Features
 
-Lets take a look inside the `src` folder
+- Asynchronous email processing via RabbitMQ
+- Email template management
+- Booking confirmation notifications
+- Flight schedule change alerts
+- Ticket status tracking
+- Retry mechanism for failed emails
+- Email delivery status monitoring
 
- - `config` -> In this folder anything and everything regarding any configurations or setup of a library or module will be done. For example: setting up `dotenv` so that we can use the environment variables anywhere in a cleaner fashion, this is done in the `server-config.js`. One more example can be to setup you logging library that can help you to prepare meaningful logs, so configuration for this library should also be done here. 
+## 🏗️ Tech Stack
 
- - `routes` -> In the routes folder, we register a route and the corresponding middleware and controllers to it. 
+- **Runtime**: Node.js
+- **Framework**: Express.js
+- **Database**: MySQL
+- **ORM**: Sequelize
+- **Message Queue**: RabbitMQ (amqplib)
+- **Email Service**: Nodemailer
+- **Logging**: Winston
+- **Development**: Nodemon
 
- - `middlewares` -> they are just going to intercept the incoming requests where we can write our validators, authenticators etc. 
+## 📁 Project Structure
 
- - `controllers` -> they are kind of the last middlewares as post them you call you business layer to execute the budiness logic. In controllers we just receive the incoming requests and data and then pass it to the business layer, and once business layer returns an output, we structure the API response in controllers and send the output. 
+```
+notification-service/
+├── src/
+│   ├── config/           # Configuration files
+│   │   ├── config.json   # Database configuration
+│   │   ├── email-config.js
+│   │   ├── logger-config.js
+│   │   └── server-config.js
+│   ├── controllers/      # Request handlers
+│   │   ├── email-controller.js
+│   │   └── info-controller.js
+│   ├── middlewares/     # Custom middlewares
+│   ├── migrations/      # Database migrations
+│   ├── models/         # Database models
+│   │   └── ticket.js   # Email ticket model
+│   ├── repositories/   # Database operations
+│   │   ├── ticket-repository.js
+│   │   └── crud-repository.js
+│   ├── routes/        # API routes
+│   │   └── v1/
+│   ├── services/      # Business logic
+│   │   └── email-service.js
+│   └── utils/        # Helper functions
+│       ├── common/
+│       ├── errors/
+│       └── helpers/
+├── .env
+└── package.json
+```
 
- - `repositories` -> this folder contains all the logic using which we interact the DB by writing queries, all the raw queries or ORM queries will go here.
+## 📝 Ticket Model
 
- - `services` -> contains the buiness logic and interacts with repositories for data from the database
+The service uses the following schema for email tickets:
 
- - `utils` -> contains helper methods, error classes etc.
+```javascript
+{
+  subject: String,        // Email subject
+  content: String,        // Email content/body
+  recepientEmail: String, // Recipient's email address
+  status: Enum           // PENDING, SUCCESS, FAILED
+}
+```
 
-### Setup the project
+## 🚀 Setup and Installation
 
- - Download this template from github and open it in your favourite text editor. 
- - Go inside the folder path and execute the following command:
-  ```
-  npm install
-  ```
- - In the root directory create a `.env` file and add the following env variables
-    ```
-        PORT=<port number of your choice>
-    ```
-    ex: 
-    ```
-        PORT=3000
-    ```
- - go inside the `src` folder and execute the following command:
-    ```
-      npx sequelize init
-    ```
- - By executing the above command you will get migrations and seeders folder along with a config.json inside the config folder. 
- - If you're setting up your development environment, then write the username of your db, password of your db and in dialect mention whatever db you are using for ex: mysql, mariadb etc
- - If you're setting up test or prod environment, make sure you also replace the host with the hosted db url.
+1. **Clone the Repository**
 
- - To run the server execute
- ```
- npm run dev
- ```
+   ```bash
+   git clone https://github.com/collab-rishi/Flyora.git
+   cd Flyora/notification-service
+   ```
+
+2. **Install Dependencies**
+
+   ```bash
+   npm install
+   ```
+
+3. **Configure Environment**
+   Create a `.env` file with:
+
+   ```env
+   PORT=3003
+   DB_HOST=localhost
+   DB_USER=root
+   DB_PASSWORD=your_password
+   DB_NAME=flyora_notifications
+   DB_DIALECT=mysql
+
+   RABBITMQ_URL=amqp://localhost
+
+   EMAIL_HOST=smtp.gmail.com
+   EMAIL_PORT=587
+   EMAIL_USER=your-email@gmail.com
+   EMAIL_PASS=your-app-specific-password
+   ```
+
+4. **Database Setup**
+
+   ```bash
+   npx sequelize-cli db:create
+   npx sequelize-cli db:migrate
+   ```
+
+5. **Start the Service**
+   ```bash
+   npm run dev
+   ```
+
+## 📨 Message Queue Topics
+
+The service listens to the following RabbitMQ queues:
+
+- `BOOKING_CONFIRMATION`: New booking notifications
+- `BOOKING_CANCELLATION`: Booking cancellation notifications
+- `FLIGHT_UPDATE`: Flight schedule change notifications
+
+## 🔄 Email Processing Flow
+
+```
+Message Queue → Email Generation → Send Attempt → Status Update
+```
+
+- **Message Reception**: Receive notification request from queue
+- **Ticket Creation**: Create a new email ticket record
+- **Email Processing**: Generate and send email
+- **Status Update**: Update ticket status based on delivery result
+- **Retry Mechanism**: Retry failed emails based on configuration
+
+## 📧 Email Templates
+
+The service supports various email templates for different scenarios:
+
+- Booking confirmation
+- Booking cancellation
+- Flight schedule changes
+- Payment confirmations
+- System alerts
+
+## 🔍 Logging
+
+The service uses Winston for logging with the following categories:
+
+- INFO: General operational logs
+- ERROR: Email delivery failures and errors
+- DEBUG: Detailed processing information
+
+## ⚙️ Configuration
+
+### Email Configuration (config/email-config.js)
+
+```javascript
+{
+  host: process.env.EMAIL_HOST,
+  port: process.env.EMAIL_PORT,
+  secure: false,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
+}
+```
+
+### Database Configuration (config/config.json)
+
+```json
+{
+  "development": {
+    "username": "root",
+    "password": "your_password",
+    "database": "flyora_notifications",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  }
+}
+```
+
+## 🏃‍♂️ Running in Development
+
+```bash
+npm run dev
+```
+
+The service will start on the configured port (default: 3003).
+
+## 🧪 Testing
+
+```bash
+# TODO: Add test commands once implemented
+```
+
+## 🔐 Security
+
+- Email authentication using secure SMTP
+- Environment variable protection
+- Input validation for email addresses
+- Rate limiting for email sending
+- Queue message validation
+
+## 🔍 Monitoring
+
+The service tracks:
+
+- Email delivery rates
+- Queue processing metrics
+- Failed email statistics
+- Retry attempts
+- System performance
+
+## 📜 License
+
+This project is licensed under the ISC License.
