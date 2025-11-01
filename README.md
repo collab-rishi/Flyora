@@ -80,7 +80,7 @@ Key Features:
 - Provides flight APIs consumed by Booking Service.  
 
 📁 Folder: `/flights-service`  
-📘 Detailed Docs: [Flights Service README](./flights-service/README.md)
+📘 Detailed Docs: [Flights Service README](./Flights-service/README.md)
 
 ---
 
