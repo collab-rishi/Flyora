@@ -1,48 +1,207 @@
-This is a base node js project template, which anyone can use as it has been prepared, by keeping some of the most important code principles and project management recommendations. Feel free to change anything. 
+# 🎫 Flyora Booking Service
 
+A microservice responsible for handling flight bookings in the Flyora Airline Booking System. This service manages the entire booking lifecycle, from creation to cancellation, while ensuring transactional integrity and proper state management.
 
-`src` -> Inside the src folder all the actual source code regarding the project will reside, this will not include any kind of tests. (You might want to make separate tests folder)
+## 🎯 Features
 
-Lets take a look inside the `src` folder
+- Create and manage flight bookings
+- Handle booking status transitions (INITIATED → PENDING → BOOKED/CANCELLED)
+- Validate seat availability with Flights Service
+- Process booking payments
+- Send booking notifications via RabbitMQ
+- Implement idempotency for booking operations
+- Schedule booking cleanup for abandoned transactions
 
- - `config` -> In this folder anything and everything regarding any configurations or setup of a library or module will be done. For example: setting up `dotenv` so that we can use the environment variables anywhere in a cleaner fashion, this is done in the `server-config.js`. One more example can be to setup you logging library that can help you to prepare meaningful logs, so configuration for this library should also be done here. 
+## 🏗️ Tech Stack
 
- - `routes` -> In the routes folder, we register a route and the corresponding middleware and controllers to it. 
+- **Runtime**: Node.js
+- **Framework**: Express.js
+- **Database**: MySQL
+- **ORM**: Sequelize
+- **Message Queue**: RabbitMQ (amqplib)
+- **HTTP Client**: Axios
+- **Logging**: Winston
+- **Scheduling**: node-cron
+- **Development**: Nodemon
 
- - `middlewares` -> they are just going to intercept the incoming requests where we can write our validators, authenticators etc. 
+## 📁 Project Structure
 
- - `controllers` -> they are kind of the last middlewares as post them you call you business layer to execute the budiness logic. In controllers we just receive the incoming requests and data and then pass it to the business layer, and once business layer returns an output, we structure the API response in controllers and send the output. 
+```
+booking-service/
+├── src/
+│   ├── config/           # Configuration files
+│   │   ├── config.json   # Database configuration
+│   │   ├── logger-config.js
+│   │   ├── queue-config.js
+│   │   └── server-config.js
+│   ├── controllers/      # Request handlers
+│   │   ├── booking-controller.js
+│   │   └── info-controller.js
+│   ├── middlewares/     # Custom middlewares
+│   ├── migrations/      # Database migrations
+│   ├── models/         # Database models
+│   │   └── booking.js
+│   ├── repositories/   # Database operations
+│   │   ├── booking-repository.js
+│   │   └── crud-repository.js
+│   ├── routes/        # API routes
+│   │   └── v1/
+│   ├── services/      # Business logic
+│   │   └── booking-service.js
+│   └── utils/        # Helper functions
+│       ├── common/
+│       ├── errors/
+│       └── helpers/
+├── .env
+└── package.json
+```
 
- - `repositories` -> this folder contains all the logic using which we interact the DB by writing queries, all the raw queries or ORM queries will go here.
+## 📝 Booking Model
 
- - `services` -> contains the buiness logic and interacts with repositories for data from the database
+The service uses the following schema for bookings:
 
- - `utils` -> contains helper methods, error classes etc.
+```javascript
+{
+  flightId: Integer,     // Reference to the flight
+  userId: Integer,       // User making the booking
+  status: Enum,         // INITIATED, PENDING, BOOKED, CANCELLED
+  noOfSeats: Integer,   // Number of seats booked
+  totalCost: Integer    // Total cost of booking
+}
+```
 
-### Setup the project
+## 🚀 Setup and Installation
 
- - Download this template from github and open it in your favourite text editor. 
- - Go inside the folder path and execute the following command:
+1. **Clone the Repository**
+
+   ```bash
+   git clone https://github.com/collab-rishi/Flyora.git
+   cd Flyora/booking-service
+   ```
+
+2. **Install Dependencies**
+
+   ```bash
+   npm install
+   ```
+
+3. **Configure Environment**
+   Create a `.env` file with:
+
+   ```env
+   PORT=3002
+   DB_HOST=localhost
+   DB_USER=root
+   DB_PASSWORD=your_password
+   DB_NAME=flyora_bookings
+   DB_DIALECT=mysql
+
+   FLIGHT_SERVICE_URL=http://localhost:3000
+   RABBITMQ_URL=amqp://localhost
+   ```
+
+4. **Database Setup**
+
+   ```bash
+   npx sequelize-cli db:create
+   npx sequelize-cli db:migrate
+   ```
+
+5. **Start the Service**
+   ```bash
+   npm run dev
+   ```
+
+## 🔄 API Endpoints
+
+### Booking Management
+
+- **Create Booking**
+
+  ```http
+  POST /api/v1/bookings
   ```
-  npm install
-  ```
- - In the root directory create a `.env` file and add the following env variables
-    ```
-        PORT=<port number of your choice>
-    ```
-    ex: 
-    ```
-        PORT=3000
-    ```
- - go inside the `src` folder and execute the following command:
-    ```
-      npx sequelize init
-    ```
- - By executing the above command you will get migrations and seeders folder along with a config.json inside the config folder. 
- - If you're setting up your development environment, then write the username of your db, password of your db and in dialect mention whatever db you are using for ex: mysql, mariadb etc
- - If you're setting up test or prod environment, make sure you also replace the host with the hosted db url.
 
- - To run the server execute
- ```
- npm run dev
- ```
+  ```json
+  {
+    "flightId": 1,
+    "noOfSeats": 2
+  }
+  ```
+
+- **Get Booking Details**
+
+  ```http
+  GET /api/v1/bookings/:id
+  ```
+
+- **Cancel Booking**
+  ```http
+  PATCH /api/v1/bookings/:id/cancel
+  ```
+
+## 🔄 Booking Status Flow
+
+```
+INITIATED → PENDING → BOOKED/CANCELLED
+```
+
+- **INITIATED**: Initial booking request received
+- **PENDING**: Payment in progress
+- **BOOKED**: Payment successful, seats confirmed
+- **CANCELLED**: Booking cancelled or payment failed
+
+## 📡 Inter-Service Communication
+
+- **Flights Service**: Validates seat availability and updates seat count
+- **Notification Service**: Sends booking confirmation/cancellation emails
+- **API Gateway**: Handles authentication and routes requests
+
+## ⚙️ Configuration
+
+### Database Configuration (config/config.json)
+
+```json
+{
+  "development": {
+    "username": "root",
+    "password": "your_password",
+    "database": "flyora_bookings",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  }
+}
+```
+
+## 🏃‍♂️ Running in Development
+
+```bash
+npm run dev
+```
+
+The service will start on the configured port (default: 3002).
+
+## 🧪 Testing
+
+```bash
+# TODO: Add test commands once implemented
+```
+
+## 🔍 Logging
+
+The service uses Winston for logging. Logs are categorized as:
+
+- INFO: General operational logs
+- ERROR: Error logs with stack traces
+- DEBUG: Detailed debugging information
+
+## 🔐 Security
+
+- Input validation for all endpoints
+- Transaction isolation for booking operations
+- Idempotency keys for payment operations
+- Rate limiting (via API Gateway)
+
+## 📜 License
+
+This project is licensed under the ISC License.
